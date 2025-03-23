@@ -1,6 +1,7 @@
 if(BUILD_TESTING)
     add_executable(mia_test
         arena-test.cpp
+        utilities-test.cpp
     )
     target_include_directories(mia_test PRIVATE 
         ../include
