@@ -50,13 +50,13 @@ concept MIA_UnsignedFloatingPoint = MIA_FloatingPoint<T> && !MIA_SignedFloatingP
         }                                                                                       \
     }
 
-#define MIA_ALIGNMENT 16
+#define MIA_DEFAULT_ALIGNMENT 16
 
 #define KB(x) (x * 1024)
 
 namespace mia {
 
-template <typename T>
+template <typename T, uint8_t Alignment = MIA_DEFAULT_ALIGNMENT>
 class simd_allocator : public std::allocator<T> {
 public:
     typedef size_t size_type;
@@ -78,7 +78,7 @@ public:
     virtual constexpr ~simd_allocator() = default;
 
     constexpr pointer allocate(size_type n) {
-        return reinterpret_cast<pointer>(std::aligned_alloc(MIA_ALIGNMENT, n * sizeof(T)));
+        return reinterpret_cast<pointer>(std::aligned_alloc(Alignment, n * sizeof(T)));
     }
 
     constexpr void deallocate(pointer p, size_type n) {
@@ -105,9 +105,9 @@ constexpr T clamp(const T& x, const T& lower, const T& upper) {
 
 // Lerp
 template <typename T, MIA_Arithmetic T2 = T>
-constexpr T lerp(const T& range_start, const T& range_end, const T2& percent) {
-    const T2 one_minus_percent = static_cast<T2>(1.0) - percent;
-    return range_start * one_minus_percent + range_end * percent;
+constexpr T lerp(const T& range_start, const T& range_end, const T2& k) {
+    const T2 one_minus_k = static_cast<T2>(1.0) - k;
+    return range_start * one_minus_k + range_end * k;
 }
 
 // In Range
@@ -139,12 +139,12 @@ constexpr T random_range(T range) {
     return (random<T>() * range * 2) - range;
 }
 template <typename T>
-constexpr T random_range(T range_start, T range_end) {
+constexpr T random_in_range(T range_start, T range_end) {
     return lerp(range_start, range_end, random<T>());
 }
 template <>
-constexpr int random_range<int>(int range_start, int range_end) {
-    return static_cast<int>(random_range<float>(static_cast<int>(range_start), static_cast<int>(range_end)));
+constexpr int random_in_range<int>(int range_start, int range_end) {
+    return static_cast<int>(random_in_range<float>(static_cast<int>(range_start), static_cast<int>(range_end)));
 }
 
 // Other

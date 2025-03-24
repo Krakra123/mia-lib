@@ -25,7 +25,7 @@ TEST(UtilMathTest, Random) {
 
 TEST(UtilMathTest, RandomRange) {
     for (int i = 0; i < 100; i++) {
-        float r = mia::math::random_range(5.0f, 15.0f);
+        float r = mia::math::random_in_range(5.0f, 15.0f);
         EXPECT_GE(r, 5.0f);
         EXPECT_LE(r, 15.0f);
     }
