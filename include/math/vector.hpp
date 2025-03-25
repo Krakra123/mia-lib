@@ -1,10 +1,10 @@
-#ifndef MIA_VECTOR_HPP_
-#define MIA_VECTOR_HPP_
+#ifndef MIA_VECTOR_GENERAL_HPP_
+#define MIA_VECTOR_GENERAL_HPP_
 
 #include <cmath>
 #include <utility>
 
-#include "utilities.hpp"
+#include "../utilities.hpp"
 
 #define MIA_VECTOR_LOOP_OPERATION(Op) MIA_UNROLLED_LOOP(i, Ds, Op)
 
@@ -286,4 +286,9 @@ constexpr vector<T, Ds> operator-=(vector<T, Ds>& v, U s) {
 
 } // namespace mia
 
-#endif // !MIA_VECTOR_HPP_
+#define _MIA_VECTOR_INTERNAL
+#include "internal/vector2.hpp"
+#include "internal/vector3.hpp"
+#include "internal/vector4.hpp"
+
+#endif // !MIA_VECTOR_GENERAL_HPP_
