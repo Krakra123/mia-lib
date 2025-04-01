@@ -11,8 +11,8 @@ using vector3 = vector<float, 3>;
 using vector3d = vector<double, 3>;
 using vector3i = vector<int, 3>;
 
-} // namespace mia
+}  // namespace mia
 
-#endif // _MIA_VECTOR_INTERNAL
+#endif  // _MIA_VECTOR_INTERNAL
 
-#endif // !MIA_VECTOR_3_HPP_
+#endif  // !MIA_VECTOR_3_HPP_

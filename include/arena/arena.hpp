@@ -1,4 +1,4 @@
-// TODO Implement dynamic arena 
+// TODO Implement dynamic arena
 
 #ifndef MIA_ARENA_HPP_
 #define MIA_ARENA_HPP_
@@ -10,11 +10,9 @@
 #include <memory>
 #include <utility>
 
-#include "utilities.hpp"
-
 #ifndef ARENA_DEFAULT_CAPACITY
-#define ARENA_DEFAULT_CAPACITY KB(4)
-#endif // !ARENA_DEFAULT_CAPACITY
+#define ARENA_DEFAULT_CAPACITY 4 * 1024
+#endif  // !ARENA_DEFAULT_CAPACITY
 
 namespace mia {
 
@@ -24,8 +22,6 @@ struct arena {
     size_t capacity;
 
     arena(size_t init_capacity = 0) {
-        assert(init_capacity >= 0);
-
         capacity = init_capacity;
         if (init_capacity == 0) {
             capacity = ARENA_DEFAULT_CAPACITY;
@@ -35,9 +31,7 @@ struct arena {
         curoffset = 0;
     }
 
-    ~arena() {
-        free(buffer);
-    }
+    ~arena() { free(buffer); }
 
     arena(const arena& other) = delete;
     arena& operator=(const arena& other) = delete;
@@ -97,6 +91,6 @@ struct arena {
     }
 };
 
-} // namespace mia
+}  // namespace mia
 
-#endif // !ARENA_HPP_
+#endif  // !ARENA_HPP_

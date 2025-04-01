@@ -25,11 +25,12 @@ template <typename T>
 concept MIA_UnsignedFloatingPoint = MIA_FloatingPoint<T> && !MIA_SignedFloatingPoint<T>;
 
 #define MIA_STRING_EXPAND(X) #X
-#define MIA_STRING(X) MIA_STRING_EXPAND(X)
+#define MIA_STRING(X)        MIA_STRING_EXPAND(X)
 
 #define MIA_UNROLLED_LOOP(iterator, number_of_iterations, operation)                            \
     {                                                                                           \
-        const int iterator = 0;                                                                 \
+        _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wshadow\"")           \
+            _Pragma("GCC diagnostic ignored \"-Wunused-variable\"") const int iterator = 0;     \
         { operation; }                                                                          \
         if ((number_of_iterations) > 1) {                                                       \
             const int iterator = 1;                                                             \
@@ -48,11 +49,10 @@ concept MIA_UnsignedFloatingPoint = MIA_FloatingPoint<T> && !MIA_SignedFloatingP
                 }                                                                               \
             }                                                                                   \
         }                                                                                       \
+        _Pragma("GCC diagnostic pop")                                                           \
     }
 
 #define MIA_DEFAULT_ALIGNMENT 16
-
-#define KB(x) (x * 1024)
 
 namespace mia {
 
@@ -67,13 +67,10 @@ public:
         typedef simd_allocator<_Tp1> other;
     };
 
-    constexpr simd_allocator() noexcept
-        : std::allocator<T>() {}
-    constexpr simd_allocator(const simd_allocator& other) noexcept
-        : std::allocator<T>(other) {}
+    constexpr simd_allocator() noexcept : std::allocator<T>() {}
+    constexpr simd_allocator(const simd_allocator& other) noexcept : std::allocator<T>(other) {}
     template <class U>
-    constexpr simd_allocator(const simd_allocator<U>& other) noexcept
-        : std::allocator<T>(other) {}
+    constexpr simd_allocator(const simd_allocator<U>& other) noexcept : std::allocator<T>(other) {}
 
     virtual constexpr ~simd_allocator() = default;
 
@@ -81,17 +78,17 @@ public:
         return reinterpret_cast<pointer>(std::aligned_alloc(Alignment, n * sizeof(T)));
     }
 
-    constexpr void deallocate(pointer p, size_type n) {
-        std::free(p, n);
-    }
+    constexpr void deallocate(pointer p, size_type n) { std::free(p, n); }
 };
 
 template <typename T1, typename T2>
-constexpr bool operator==(const simd_allocator<T1> lhs, const simd_allocator<T2> rhs) noexcept {
+constexpr bool operator==([[maybe_unused]] const simd_allocator<T1> lhs,
+                          [[maybe_unused]] const simd_allocator<T2> rhs) noexcept {
     return true;
 }
 template <typename T1, typename T2>
-constexpr bool operator!=(const simd_allocator<T1> lhs, const simd_allocator<T2> rhs) noexcept {
+constexpr bool operator!=([[maybe_unused]] const simd_allocator<T1> lhs,
+                          [[maybe_unused]] const simd_allocator<T2> rhs) noexcept {
     return false;
 }
 
@@ -104,7 +101,7 @@ constexpr T clamp(const T& x, const T& lower, const T& upper) {
 }
 
 // Lerp
-template <typename T, MIA_Arithmetic T2 = T>
+template <typename T, typename T2 = T>
 constexpr T lerp(const T& range_start, const T& range_end, const T2& k) {
     const T2 one_minus_k = static_cast<T2>(1.0) - k;
     return range_start * one_minus_k + range_end * k;
@@ -129,9 +126,7 @@ template <>
 inline double random<double>() {
     return static_cast<double>(rand()) / (static_cast<double>(RAND_MAX + 1LL));
 }
-inline double random() {
-    return random<double>();
-}
+inline double random() { return random<double>(); }
 
 // Random Range
 template <typename T>
@@ -144,7 +139,8 @@ constexpr T random_in_range(T range_start, T range_end) {
 }
 template <>
 constexpr int random_in_range<int>(int range_start, int range_end) {
-    return static_cast<int>(random_in_range<float>(static_cast<int>(range_start), static_cast<int>(range_end)));
+    return static_cast<int>(
+        random_in_range<float>(static_cast<float>(range_start), static_cast<float>(range_end)));
 }
 
 // Other
@@ -169,8 +165,8 @@ uint32_t round_up_type_bound(uint32_t v) {
     return (v + sizeof(T) - 1) & ~(sizeof(T) - 1);
 }
 
-} // namespace math
+}  // namespace math
 
-} // namespace mia
+}  // namespace mia
 
-#endif // !_MIA_UTILITIES_HPP
+#endif  // !_MIA_UTILITIES_HPP

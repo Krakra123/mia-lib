@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "arena/arena.hpp"
+
+#include <gtest/gtest.h>
 
 TEST(ArenaTest, ConstructorDestructorWorking) {
     EXPECT_NO_THROW({ mia::arena a; });
@@ -26,9 +26,7 @@ TEST(ArenaTest, AllocateMemoryWithArgs) {
         int x;
         double y;
 
-        TestStruct(int a, double b)
-            : x(a)
-            , y(b) {}
+        TestStruct(int a, double b) : x(a), y(b) {}
     };
 
     mia::arena a;

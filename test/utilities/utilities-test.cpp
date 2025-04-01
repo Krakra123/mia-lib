@@ -1,7 +1,6 @@
-#include <gtest/gtest.h>
+#include "math/utilities.hpp"
 
-#include "utilities.hpp"
-#include <iostream>
+#include <gtest/gtest.h>
 
 TEST(UtilMathTest, MathClampWithNumbers) {
     EXPECT_EQ(mia::math::clamp(5, 1, 10), 5);
@@ -17,7 +16,7 @@ TEST(UtilMathTest, MathLerpWithNumbers) {
 
 TEST(UtilMathTest, Random) {
     for (int i = 0; i < 100; i++) {
-        float r = mia::math::random();
+        float r = mia::math::random<float>();
         EXPECT_GE(r, 0.0f);
         EXPECT_LE(r, 1.0f);
     }
@@ -33,7 +32,7 @@ TEST(UtilMathTest, RandomRange) {
 
 TEST(UtilTets, A) {
     mia::simd_allocator<int> a;
-    mia::simd_allocator<int>::pointer p;
+    [[maybe_unused]] mia::simd_allocator<int>::pointer p;
 }
 
 int main(int argc, char** argv) {

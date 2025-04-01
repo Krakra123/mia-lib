@@ -1,15 +1,15 @@
 if(BUILD_TESTING)
-    add_executable(mia_test
+    add_executable(mia-test
         arena/arena-test.cpp
         utilities/utilities-test.cpp
     )
-    target_include_directories(mia_test PRIVATE 
+    target_include_directories(mia-test PRIVATE 
         ../include
         ../dependencies/googletest/googletest/include
     )
 
-    target_link_libraries(mia_test PRIVATE GTest::gtest_main)
+    target_link_libraries(mia-test PRIVATE GTest::gtest_main)
 
     include(GoogleTest)
-    gtest_discover_tests(mia_test)
+    gtest_discover_tests(mia-test)
 endif()
