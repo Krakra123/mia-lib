@@ -1,5 +1,5 @@
-#ifndef MIA_VECTOR_GENERAL_HPP_
-#define MIA_VECTOR_GENERAL_HPP_
+#ifndef MIA_VECTOR_HPP_
+#define MIA_VECTOR_HPP_
 
 #include <cmath>
 #include <utility>
@@ -10,7 +10,7 @@
 
 namespace mia {
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 class vector {
 public:
     constexpr vector() = default;
@@ -127,138 +127,138 @@ public:
     T data[Ds];
 };
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr bool operator==(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     MIA_VECTOR_LOOP_OPERATION(if (lhs != rhs) return false)
     return true;
 }
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr bool operator!=(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     return !(lhs == rhs);
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator-(const vector<T, Ds>& v) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = -v.data[i])
     return res;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator*(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] * rhs[i])
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator*(const vector<T, Ds>& v, U s) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] * s);
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator*(U s, const vector<T, Ds>& v) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] * s);
     return res;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator/(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] / rhs[i])
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator/(const vector<T, Ds>& v, U s) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] / s)
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator/(U s, const vector<T, Ds>& v) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = s / v[i])
     return res;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator+(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] + rhs[i])
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator+(const vector<T, Ds>& v, U s) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] + s)
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator+(U s, const vector<T, Ds>& v) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] + s)
     return res;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator-(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] - rhs[i])
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator-(const vector<T, Ds>& v, U s) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] - s)
     return res;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator-(U s, const vector<T, Ds>& v) {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = s - v[i])
     return res;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator*=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] *= rhs[i])
     return lhs;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator*=(vector<T, Ds>& v, U s) {
     MIA_VECTOR_LOOP_OPERATION(v[i] *= s);
     return v;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator/=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] /= rhs[i])
     return lhs;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator/=(vector<T, Ds>& v, U s) {
     MIA_VECTOR_LOOP_OPERATION(v[i] /= s)
     return v;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator+=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] += rhs[i])
     return lhs;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator+=(vector<T, Ds>& v, U s) {
     MIA_VECTOR_LOOP_OPERATION(v[i] += s)
     return v;
 }
 
-template <MIA_Arithmetic T, size_t Ds>
+template <typename T, size_t Ds>
 constexpr vector<T, Ds> operator-=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] -= rhs[i])
     return lhs;
 }
-template <MIA_Arithmetic T, size_t Ds, MIA_Arithmetic U = T>
+template <typename T, size_t Ds, typename U = T>
 constexpr vector<T, Ds> operator-=(vector<T, Ds>& v, U s) {
     MIA_VECTOR_LOOP_OPERATION(v[i] -= s)
     return v;
@@ -271,4 +271,4 @@ constexpr vector<T, Ds> operator-=(vector<T, Ds>& v, U s) {
 #include "internal/vector3.hpp"
 #include "internal/vector4.hpp"
 
-#endif  // !MIA_VECTOR_GENERAL_HPP_
+#endif  // !MIA_VECTOR_HPP_
