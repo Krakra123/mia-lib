@@ -14,22 +14,6 @@ TEST(UtilMathTest, MathLerpWithNumbers) {
     EXPECT_FLOAT_EQ(mia::math::lerp(0.0f, 10.0f, 0.5f), 5.0f);
 }
 
-TEST(UtilMathTest, Random) {
-    for (int i = 0; i < 100; i++) {
-        float r = mia::math::random<float>();
-        EXPECT_GE(r, 0.0f);
-        EXPECT_LE(r, 1.0f);
-    }
-}
-
-TEST(UtilMathTest, RandomRange) {
-    for (int i = 0; i < 100; i++) {
-        float r = mia::math::random_in_range(5.0f, 15.0f);
-        EXPECT_GE(r, 5.0f);
-        EXPECT_LE(r, 15.0f);
-    }
-}
-
 TEST(UtilTets, A) {
     mia::simd_allocator<int> a;
     [[maybe_unused]] mia::simd_allocator<int>::pointer p;

@@ -31,7 +31,7 @@ TEST(ArenaTest, AllocateMemoryWithArgs) {
 
     mia::arena a;
 
-    TestStruct* obj = a.alloc<TestStruct>(42, 3.14);
+    auto* obj = a.alloc<TestStruct>(42, 3.14);
 
     ASSERT_NE(obj, nullptr);
     EXPECT_EQ(obj->x, 42);

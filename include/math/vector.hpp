@@ -1,10 +1,9 @@
-#ifndef MIA_VECTOR_HPP_
-#define MIA_VECTOR_HPP_
+#pragma once
 
 #include <cmath>
 #include <utility>
 
-#include "utilities.hpp"
+#include "./utilities.hpp"
 
 #define MIA_VECTOR_LOOP_OPERATION(Op) MIA_UNROLLED_LOOP(i, Ds, Op)
 
@@ -27,39 +26,39 @@ public:
         MIA_VECTOR_LOOP_OPERATION(std::swap(data[i], other.data[i]))
     }
 
-    constexpr vector& operator=(T* a) { return *this = vector(a); }
+    constexpr auto operator=(T* a) -> vector& { return *this = vector(a); }
 
-    constexpr vector& operator=(const vector& other) { return *this = vector(other); }
+    constexpr auto operator=(const vector& other) -> vector& { return *this = vector(other); }
 
-    constexpr vector& operator=(vector&& other) noexcept {
+    constexpr auto operator=(vector&& other) noexcept -> vector& {
         MIA_VECTOR_LOOP_OPERATION(std::swap(data[i], other.data[i]))
         return *this;
     }
 
-    inline T& operator()(const int i) { return data[i]; }
-    constexpr T& operator()(const int i) const { return data[i]; }
+    inline auto operator()(const int i) -> T& { return data[i]; }
+    constexpr auto operator()(const int i) const -> T& { return data[i]; }
 
-    inline T& operator[](const int i) { return data[i]; }
-    constexpr T& operator[](const int i) const { return data[i]; }
+    inline auto operator[](const int i) -> T& { return data[i]; }
+    constexpr auto operator[](const int i) const -> T& { return data[i]; }
 
-    constexpr T magnitude() const { return sqrt(magnitude_squared()); }
+    constexpr auto magnitude() const -> T { return sqrt(magnitude_squared()); }
 
-    constexpr T magnitude_squared() const { return dot_product(*this, *this); }
+    constexpr auto magnitude_squared() const -> T { return dot_product(*this, *this); }
 
-    constexpr vector<T, Ds> normalized() const {
+    constexpr auto normalized() const -> vector<T, Ds> {
         vector<T, Ds> res = *this;
         constexpr T length = length();
         MIA_VECTOR_LOOP_OPERATION(res[i] *= (T(1) / length));
         return res;
     }
 
-    constexpr T normalize() {
+    constexpr auto normalize() -> T {
         constexpr T length = length();
         MIA_VECTOR_LOOP_OPERATION(data[i] *= (T(1) / length));
         return length;
     }
 
-    static constexpr T dot_product(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+    static constexpr auto dot_product(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
         T result = 0;
         MIA_VECTOR_LOOP_OPERATION(result += lhs[i] * rhs[i]);
         return result;
@@ -67,39 +66,39 @@ public:
 
     // static constexpr vector<T, Ds> cross_product(const vector<T, Ds>& lhs, const vector<T, Ds>&
     // rhs) {}
-    static constexpr vector<T, Ds> hadamard_product(const vector<T, Ds>& lhs,
-                                                    const vector<T, Ds>& rhs) {
+    static constexpr auto hadamard_product(const vector<T, Ds>& lhs,
+                                                    const vector<T, Ds>& rhs) -> vector<T, Ds> {
         vector<T, Ds> res;
         MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] * rhs[i]);
         return res;
     }
 
-    static constexpr vector<T, Ds> lerp(const vector<T, Ds>& start, const vector<T, Ds>& end, T k) {
+    static constexpr auto lerp(const vector<T, Ds>& start, const vector<T, Ds>& end, T k) -> vector<T, Ds> {
         vector<T, Ds> res;
         const T one_minus_k = static_cast<T>(1.0) - k;
         MIA_VECTOR_LOOP_OPERATION(res[i] = one_minus_k * start[i] + k * end[i]);
         return res;
     }
 
-    static constexpr const vector<T, Ds>& max(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+    static constexpr auto max(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
         vector<T, Ds> res;
         MIA_VECTOR_LOOP_OPERATION(res[i] = std::max(lhs[i], rhs[i]));
         return res;
     }
-    static constexpr const vector<T, Ds>& min(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+    static constexpr auto min(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
         vector<T, Ds> res;
         MIA_VECTOR_LOOP_OPERATION(res[i] = std::min(lhs[i], rhs[i]));
         return res;
     }
 
-    static constexpr T distance(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+    static constexpr auto distance(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
         return (rhs - lhs).length();
     }
-    static constexpr T distance_squared(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+    static constexpr auto distance_squared(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
         return (rhs - lhs).length_squared();
     }
 
-    static constexpr T angle(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+    static constexpr auto angle(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
         const T divisor = lhs.Length() * rhs.Length();
         if (divisor == T(0)) {
             return T(0);
@@ -111,164 +110,149 @@ public:
         return T(0);
     }
 
-    static constexpr vector<T, Ds> random_range(T range) {
-        vector<T, Ds> res;
-        MIA_VECTOR_LOOP_OPERATION(res[i] = math::random_range(range))
-        return res;
-    }
-
-    static constexpr vector<T, Ds> random_unit_vector() {
-        vector<T, Ds> res;
-        MIA_VECTOR_LOOP_OPERATION(res[i] = math::random_range(1))
-        constexpr T mag = res.magnitude();
-        return res / mag;
-    }
-
-    T data[Ds];
+    std::array<T, Ds> data;
 };
 
 template <typename T, size_t Ds>
-constexpr bool operator==(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator==(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> bool {
     MIA_VECTOR_LOOP_OPERATION(if (lhs != rhs) return false)
     return true;
 }
 template <typename T, size_t Ds>
-constexpr bool operator!=(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator!=(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> bool {
     return !(lhs == rhs);
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator-(const vector<T, Ds>& v) {
+constexpr auto operator-(const vector<T, Ds>& v) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = -v.data[i])
     return res;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator*(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator*(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] * rhs[i])
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator*(const vector<T, Ds>& v, U s) {
+constexpr auto operator*(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] * s);
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator*(U s, const vector<T, Ds>& v) {
+constexpr auto operator*(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] * s);
     return res;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator/(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator/(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] / rhs[i])
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator/(const vector<T, Ds>& v, U s) {
+constexpr auto operator/(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] / s)
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator/(U s, const vector<T, Ds>& v) {
+constexpr auto operator/(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = s / v[i])
     return res;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator+(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator+(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] + rhs[i])
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator+(const vector<T, Ds>& v, U s) {
+constexpr auto operator+(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] + s)
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator+(U s, const vector<T, Ds>& v) {
+constexpr auto operator+(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] + s)
     return res;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator-(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator-(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] - rhs[i])
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator-(const vector<T, Ds>& v, U s) {
+constexpr auto operator-(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] - s)
     return res;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator-(U s, const vector<T, Ds>& v) {
+constexpr auto operator-(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
     vector<T, Ds> res;
     MIA_VECTOR_LOOP_OPERATION(res[i] = s - v[i])
     return res;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator*=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator*=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] *= rhs[i])
     return lhs;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator*=(vector<T, Ds>& v, U s) {
+constexpr auto operator*=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(v[i] *= s);
     return v;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator/=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator/=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] /= rhs[i])
     return lhs;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator/=(vector<T, Ds>& v, U s) {
+constexpr auto operator/=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(v[i] /= s)
     return v;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator+=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator+=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] += rhs[i])
     return lhs;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator+=(vector<T, Ds>& v, U s) {
+constexpr auto operator+=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(v[i] += s)
     return v;
 }
 
 template <typename T, size_t Ds>
-constexpr vector<T, Ds> operator-=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) {
+constexpr auto operator-=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(lhs[i] -= rhs[i])
     return lhs;
 }
 template <typename T, size_t Ds, typename U = T>
-constexpr vector<T, Ds> operator-=(vector<T, Ds>& v, U s) {
+constexpr auto operator-=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
     MIA_VECTOR_LOOP_OPERATION(v[i] -= s)
     return v;
 }
 
 }  // namespace mia
 
-#define _MIA_VECTOR_INTERNAL
+#define MIA_VECTOR_INTERNAL_
 #include "internal/vector2.hpp"
 #include "internal/vector3.hpp"
 #include "internal/vector4.hpp"
-
-#endif  // !MIA_VECTOR_HPP_

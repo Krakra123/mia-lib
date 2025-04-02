@@ -1,0 +1,4 @@
+Checks: '-*,bugprone-*,cert-*,modernize-*,performance-*,zircon-*,-modernize-macro-to-enum,-header-filter=.*'
+HeaderFilterRegex: '.*'
+SystemHeaders: false
+UseColor: true

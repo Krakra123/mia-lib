@@ -1,7 +1,6 @@
-#ifndef MIA_VECTOR_3_HPP_
-#define MIA_VECTOR_3_HPP_
+#pragma once
 
-#ifdef _MIA_VECTOR_INTERNAL
+#ifdef MIA_VECTOR_INTERNAL_
 
 #include <cstdint>
 
@@ -14,5 +13,3 @@ using vector3i = vector<int, 3>;
 }  // namespace mia
 
 #endif  // _MIA_VECTOR_INTERNAL
-
-#endif  // !MIA_VECTOR_3_HPP_

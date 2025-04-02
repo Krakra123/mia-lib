@@ -1,7 +1,5 @@
 // TODO Implement dynamic arena
-
-#ifndef MIA_ARENA_HPP_
-#define MIA_ARENA_HPP_
+#pragma once
 
 #include <cassert>
 #include <cstdint>
@@ -11,7 +9,7 @@
 #include <utility>
 
 #ifndef ARENA_DEFAULT_CAPACITY
-#define ARENA_DEFAULT_CAPACITY 4 * 1024
+#define ARENA_DEFAULT_CAPACITY (4ll * 1024)
 #endif  // !ARENA_DEFAULT_CAPACITY
 
 namespace mia {
@@ -34,14 +32,14 @@ struct arena {
     ~arena() { free(buffer); }
 
     arena(const arena& other) = delete;
-    arena& operator=(const arena& other) = delete;
+    auto operator=(const arena& other) -> arena& = delete;
 
     arena(arena&& other) noexcept {
         buffer = std::exchange(other.buffer, nullptr);
         curoffset = std::exchange(other.curoffset, 0);
         capacity = std::exchange(other.capacity, 0);
     }
-    arena& operator=(arena&& other) noexcept {
+    auto operator=(arena&& other) noexcept -> arena& {
         if (this != &other) {
             delete[] buffer;
 
@@ -53,7 +51,7 @@ struct arena {
     }
 
     template <typename T, class Allocator = std::allocator<T>, typename... Args>
-    inline T* alloc(Args&&... args) {
+    inline auto alloc(Args&&... args) -> T* {
         size_t size = sizeof(T);
         size_t align = alignof(T);
 
@@ -72,7 +70,7 @@ struct arena {
     }
 
     template <typename T, class Allocator = std::allocator<T>>
-    inline T* add(T&& other) noexcept {
+    inline auto add(T&& other) noexcept -> T* {
         size_t size = sizeof(T);
         size_t align = alignof(T);
 
@@ -92,5 +90,3 @@ struct arena {
 };
 
 }  // namespace mia
-
-#endif  // !ARENA_HPP_
