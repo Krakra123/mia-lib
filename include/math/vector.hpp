@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
 #include <utility>
 
 #include "./utilities.hpp"
@@ -11,6 +12,13 @@ namespace mia {
 
 template <typename T, size_t Ds>
 class vector {
+public:
+    using value_type = T;
+    using size_type = size_t;
+    using difference_type = std::ptrdiff_t;
+    using reference = value_type&;
+    using const_reference = const value_type&;
+
 public:
     constexpr vector() = default;
     explicit constexpr vector(T s) { MIA_VECTOR_LOOP_OPERATION(data[i] = s) }
@@ -67,25 +75,28 @@ public:
     // static constexpr vector<T, Ds> cross_product(const vector<T, Ds>& lhs, const vector<T, Ds>&
     // rhs) {}
     static constexpr auto hadamard_product(const vector<T, Ds>& lhs,
-                                                    const vector<T, Ds>& rhs) -> vector<T, Ds> {
+                                           const vector<T, Ds>& rhs) -> vector<T, Ds> {
         vector<T, Ds> res;
         MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] * rhs[i]);
         return res;
     }
 
-    static constexpr auto lerp(const vector<T, Ds>& start, const vector<T, Ds>& end, T k) -> vector<T, Ds> {
+    static constexpr auto lerp(const vector<T, Ds>& start, const vector<T, Ds>& end,
+                               T k) -> vector<T, Ds> {
         vector<T, Ds> res;
         const T one_minus_k = static_cast<T>(1.0) - k;
         MIA_VECTOR_LOOP_OPERATION(res[i] = one_minus_k * start[i] + k * end[i]);
         return res;
     }
 
-    static constexpr auto max(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
+    static constexpr auto max(const vector<T, Ds>& lhs,
+                              const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
         vector<T, Ds> res;
         MIA_VECTOR_LOOP_OPERATION(res[i] = std::max(lhs[i], rhs[i]));
         return res;
     }
-    static constexpr auto min(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
+    static constexpr auto min(const vector<T, Ds>& lhs,
+                              const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
         vector<T, Ds> res;
         MIA_VECTOR_LOOP_OPERATION(res[i] = std::min(lhs[i], rhs[i]));
         return res;
@@ -94,7 +105,8 @@ public:
     static constexpr auto distance(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
         return (rhs - lhs).length();
     }
-    static constexpr auto distance_squared(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
+    static constexpr auto distance_squared(const vector<T, Ds>& lhs,
+                                           const vector<T, Ds>& rhs) -> T {
         return (rhs - lhs).length_squared();
     }
 
@@ -115,7 +127,7 @@ public:
 
 template <typename T, size_t Ds>
 constexpr auto operator==(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> bool {
-    MIA_VECTOR_LOOP_OPERATION(if (lhs != rhs) return false)
+    MIA_VECTOR_LOOP_OPERATION(if (lhs[i] != rhs[i]) return false)
     return true;
 }
 template <typename T, size_t Ds>
@@ -251,8 +263,3 @@ constexpr auto operator-=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
 }
 
 }  // namespace mia
-
-#define MIA_VECTOR_INTERNAL_
-#include "internal/vector2.hpp"
-#include "internal/vector3.hpp"
-#include "internal/vector4.hpp"
