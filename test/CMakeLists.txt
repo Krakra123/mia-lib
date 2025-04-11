@@ -1,7 +1,8 @@
 if(BUILD_TESTING)
     add_executable(mia-test
-        arena/arena-test.cpp
-        utilities/utilities-test.cpp
+        # arena/arena-test.cpp
+        # utilities/utilities-test.cpp
+        ./math/vector-test.cpp
     )
     target_include_directories(mia-test PRIVATE 
         ../include

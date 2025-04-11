@@ -1,7 +1,11 @@
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
+#include <iterator>
+#include <ranges>
 #include <utility>
 
 #include "./utilities.hpp"
@@ -18,11 +22,21 @@ public:
     using difference_type = std::ptrdiff_t;
     using reference = value_type&;
     using const_reference = const value_type&;
+    using pointer = value_type*;
+    using const_pointer = const value_type*;
+    using iterator = value_type;
+    using const_iterator = const value_type;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+    static constexpr size_t dimension = Ds;
 
 public:
-    constexpr vector() = default;
-    explicit constexpr vector(T s) { MIA_VECTOR_LOOP_OPERATION(data[i] = s) }
-    explicit constexpr vector(T* a) { MIA_VECTOR_LOOP_OPERATION(data[i] = a[i]) }
+    constexpr vector() { data.fill(T{}); }
+    constexpr vector(T* a) { MIA_VECTOR_LOOP_OPERATION(data[i] = a[i]) }
+    constexpr vector(std::initializer_list<T> a) {
+        std::ranges::copy(a | std::views::take(data.size()), data.begin());
+    }
 
     constexpr vector(const vector& other) { MIA_VECTOR_LOOP_OPERATION(data[i] = other.data[i]) }
     template <typename U>
@@ -34,7 +48,8 @@ public:
         MIA_VECTOR_LOOP_OPERATION(std::swap(data[i], other.data[i]))
     }
 
-    constexpr auto operator=(T* a) -> vector& { return *this = vector(a); }
+    constexpr auto operator=(T* a) { return *this = vector(a); }
+    constexpr auto operator=(std::initializer_list<T> a) -> vector& { return *this = vector(a); }
 
     constexpr auto operator=(const vector& other) -> vector& { return *this = vector(other); }
 
@@ -43,11 +58,18 @@ public:
         return *this;
     }
 
-    inline auto operator()(const int i) -> T& { return data[i]; }
-    constexpr auto operator()(const int i) const -> T& { return data[i]; }
+    inline auto operator()(const size_t i) -> T& { return data[i]; }
+    constexpr auto operator()(const size_t i) const -> T& { return data[i]; }
 
-    inline auto operator[](const int i) -> T& { return data[i]; }
-    constexpr auto operator[](const int i) const -> T& { return data[i]; }
+    inline auto operator[](const size_t i) -> T& { return data[i]; }
+    constexpr auto operator[](const size_t i) const -> T& { return data[i]; }
+
+    constexpr auto begin() noexcept -> iterator { return data.begin(); }
+    constexpr auto begin() const noexcept -> const_iterator { return data.begin(); }
+    constexpr auto cbegin() const noexcept -> const_iterator { return data.cbegin(); }
+    constexpr auto end() noexcept -> iterator { return data.end(); }
+    constexpr auto end() const noexcept -> const_iterator { return data.end(); }
+    constexpr auto cend() const noexcept -> const_iterator { return data.cend(); }
 
     constexpr auto magnitude() const -> T { return sqrt(magnitude_squared()); }
 
