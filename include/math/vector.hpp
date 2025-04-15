@@ -58,11 +58,8 @@ public:
         return *this;
     }
 
-    inline auto operator()(const size_t i) -> T& { return data[i]; }
-    constexpr auto operator()(const size_t i) const -> T& { return data[i]; }
-
-    inline auto operator[](const size_t i) -> T& { return data[i]; }
-    constexpr auto operator[](const size_t i) const -> T& { return data[i]; }
+    constexpr auto operator[](const size_t i) noexcept -> reference { return data[i]; }
+    constexpr auto operator[](const size_t i) const noexcept -> const_reference { return data[i]; }
 
     constexpr auto begin() noexcept -> iterator { return data.begin(); }
     constexpr auto begin() const noexcept -> const_iterator { return data.begin(); }
@@ -71,24 +68,24 @@ public:
     constexpr auto end() const noexcept -> const_iterator { return data.end(); }
     constexpr auto cend() const noexcept -> const_iterator { return data.cend(); }
 
-    constexpr auto magnitude() const -> T { return sqrt(magnitude_squared()); }
+    constexpr auto magnitude() const -> value_type { return static_cast<T>(sqrt(magnitude_squared())); }
 
-    constexpr auto magnitude_squared() const -> T { return dot_product(*this, *this); }
+    constexpr auto magnitude_squared() const -> value_type { return dot_product(*this, *this); }
 
     constexpr auto normalized() const -> vector<T, Ds> {
         vector<T, Ds> res = *this;
-        constexpr T length = length();
-        MIA_VECTOR_LOOP_OPERATION(res[i] *= (T(1) / length));
+        auto mag = magnitude();
+        MIA_VECTOR_LOOP_OPERATION(res[i] *= (T(1) / mag));
         return res;
     }
 
-    constexpr auto normalize() -> T {
-        constexpr T length = length();
-        MIA_VECTOR_LOOP_OPERATION(data[i] *= (T(1) / length));
-        return length;
+    constexpr auto normalize() -> value_type {
+        auto mag = magnitude();
+        MIA_VECTOR_LOOP_OPERATION(data[i] *= (T(1) / mag));
+        return mag;
     }
 
-    static constexpr auto dot_product(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
+    static constexpr auto dot_product(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> value_type {
         T result = 0;
         MIA_VECTOR_LOOP_OPERATION(result += lhs[i] * rhs[i]);
         return result;
@@ -124,15 +121,15 @@ public:
         return res;
     }
 
-    static constexpr auto distance(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
+    static constexpr auto distance(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> value_type {
         return (rhs - lhs).length();
     }
     static constexpr auto distance_squared(const vector<T, Ds>& lhs,
-                                           const vector<T, Ds>& rhs) -> T {
+                                           const vector<T, Ds>& rhs) -> value_type {
         return (rhs - lhs).length_squared();
     }
 
-    static constexpr auto angle(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> T {
+    static constexpr auto angle(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> value_type {
         const T divisor = lhs.Length() * rhs.Length();
         if (divisor == T(0)) {
             return T(0);
