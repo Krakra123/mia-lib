@@ -1,10 +1,78 @@
-BasedOnStyle: Google
+# .clang-format file that preserves manual line breaks
+BasedOnStyle: LLVM
 Language: Cpp
 
+# Don't reflow comments
+ReflowComments: false
+
+# Preserve line breaks in code
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+KeepEmptyLinesAtTheStartOfBlocks: true
+MaxEmptyLinesToKeep: 2
+
+# Alignment settings
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true
+AlignEscapedNewlines: Right
+AlignOperands: true
+AlignTrailingComments: true
 
-ColumnLimit: 100
+# Prevent breaking after return type
+AlwaysBreakAfterReturnType: None
 
-AccessModifierOffset: -4
+# Column limit - set to 0 to avoid automatic line breaking
+# This helps preserve manual line breaks
+ColumnLimit: 0
+
+# Indentation
 IndentWidth: 4
+TabWidth: 4
 UseTab: Never
+ContinuationIndentWidth: 4
+IndentCaseLabels: false
+IndentPPDirectives: None
+
+# Line breaks - this is the key change!
+BreakBeforeBraces: Custom
+BreakBeforeBinaryOperators: All
+BreakBeforeTernaryOperators: true
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+# Spacing preferences
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Breaking penalties - higher values discourage breaking
+PenaltyBreakAssignment: 100
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyBreakComment: 100
+PenaltyBreakFirstLessLess: 100
+PenaltyBreakString: 100
+PenaltyExcessCharacter: 100
+PenaltyReturnTypeOnItsOwnLine: 100
