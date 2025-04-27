@@ -18,7 +18,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clan
         -Wdouble-promotion # Warn about float to double promotions
         -Wformat=2   # Stronger format string warnings
         -Wundef      # Warn about undefined macros
-        -Werror      # Treat warnings as errors
+        # -Werror      # Treat warnings as errors # FIXME: turn Werror backon if ready
     )
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options(

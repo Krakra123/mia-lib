@@ -16,8 +16,6 @@ MaxEmptyLinesToKeep: 2
 
 # Alignment settings
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: Right
 AlignOperands: true

@@ -1,284 +1,505 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <iterator>
+#include <optional>
 #include <ranges>
-#include <utility>
-
-#include "./utilities.hpp"
-
-#define MIA_VECTOR_LOOP_OPERATION(Op) MIA_UNROLLED_LOOP(i, Ds, Op)
+#include <type_traits>
 
 namespace mia {
 
-template <typename T, size_t Ds>
+// FIXME: may failed on some edge case if value ~0
+template <typename T, size_t Dims>
+    requires std::is_arithmetic_v<T>
 class vector {
-public:
+  public:
+    std::array<T, Dims> data;
+
+    // NOTE: MEMBER TYPES
+
     using value_type = T;
     using size_type = size_t;
     using difference_type = std::ptrdiff_t;
-    using reference = value_type&;
-    using const_reference = const value_type&;
-    using pointer = value_type*;
-    using const_pointer = const value_type*;
-    using iterator = value_type;
-    using const_iterator = const value_type;
+    using reference = value_type &;
+    using const_reference = const value_type &;
+    using pointer = value_type *;
+    using const_pointer = const value_type *;
+    using iterator = value_type *;
+    using const_iterator = const value_type *;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    static constexpr size_t dimension = Ds;
+    // NOTE: TYPES
 
-public:
-    constexpr vector() { data.fill(T{}); }
-    constexpr vector(T* a) { MIA_VECTOR_LOOP_OPERATION(data[i] = a[i]) }
-    constexpr vector(std::initializer_list<T> a) {
-        std::ranges::copy(a | std::views::take(data.size()), data.begin());
+    using compute_type = std::conditional_t<
+        std::is_floating_point_v<T> && (sizeof(T) * 8 >= 64),
+        float, T>;
+
+    // NOTE: ITERATION
+
+    constexpr auto begin() noexcept -> iterator {
+        return data.begin();
+    }
+    constexpr auto begin() const noexcept -> const_iterator {
+        return data.begin();
+    }
+    constexpr auto cbegin() const noexcept -> const_iterator {
+        return data.cbegin();
+    }
+    constexpr auto end() noexcept -> iterator {
+        return data.end();
+    }
+    constexpr auto end() const noexcept -> const_iterator {
+        return data.end();
+    }
+    constexpr auto cend() const noexcept -> const_iterator {
+        return data.cend();
+    }
+    [[nodiscard]] constexpr auto size() const noexcept -> size_type {
+        return Dims;
+    }
+    [[nodiscard]] constexpr auto dimension() const noexcept -> size_type {
+        return size();
     }
 
-    constexpr vector(const vector& other) { MIA_VECTOR_LOOP_OPERATION(data[i] = other.data[i]) }
+    // NOTE: DESTRUCTOR
+
+    // NOTE: CONSTRUCTOR
+
+    // :: Constructor with value
+    // Default constructor
+    constexpr vector() {
+        data.fill(T{});
+    }
+
+    // Constructor with containers
+    template <std::ranges::contiguous_range Container>
+        requires std::is_convertible_v<std::ranges::range_reference_t<Container>, value_type>
+    constexpr vector(const Container &container) {
+        std::span container_span = container;
+
+        assert(container_span.size() >= size());
+
+        auto transformed_range = container_span
+                                 | std::views::take(size())
+                                 | std::views::transform([](auto &&v) { return static_cast<T>(v); });
+        std::ranges::copy(transformed_range, data.begin());
+    }
+
+    // Constructor with initializer_list
     template <typename U>
-    explicit constexpr vector(const vector<U, Ds>& other) {
-        MIA_VECTOR_LOOP_OPERATION(data[i] = static_cast<T>(other.data[i]))
+        requires std::is_convertible_v<U, value_type>
+    constexpr vector(std::initializer_list<U> list) {
+        assert(list.size() >= size());
+
+        auto transformed_range = list
+                                 | std::views::take(size())
+                                 | std::views::transform([](U v) { return static_cast<T>(v); });
+        std::ranges::copy(transformed_range, begin());
     }
 
-    constexpr vector(vector&& other) noexcept {
-        MIA_VECTOR_LOOP_OPERATION(std::swap(data[i], other.data[i]))
+    // :: Copy contructor
+    template <typename U, size_t N>
+        requires std::is_convertible_v<U, value_type> && (N >= Dims)
+    constexpr vector(const vector<U, N> &other) {
+        auto transformed_range = other
+                                 | std::views::transform([](U v) { return static_cast<T>(v); });
+        std::ranges::copy(transformed_range, begin());
+    }
+    constexpr vector(const vector &other) {
+        std::ranges::copy(other, begin());
     }
 
-    constexpr auto operator=(T* a) { return *this = vector(a); }
-    constexpr auto operator=(std::initializer_list<T> a) -> vector& { return *this = vector(a); }
+    // :: Move constructor
+    constexpr vector(vector &&other) noexcept {
+        std::ranges::move(other, begin());
+    }
 
-    constexpr auto operator=(const vector& other) -> vector& { return *this = vector(other); }
+    // NOTE: ASSIGNMENT
 
-    constexpr auto operator=(vector&& other) noexcept -> vector& {
-        MIA_VECTOR_LOOP_OPERATION(std::swap(data[i], other.data[i]))
+    // :: Assignment with value
+    // Assignment with containers
+    template <std::ranges::contiguous_range Container>
+        requires std::is_convertible_v<std::ranges::range_reference_t<Container>, value_type>
+    constexpr auto operator=(const Container &container) -> vector & {
+        return *this(container);
+    }
+
+    // Assignment with initializer_list
+    constexpr auto operator=(std::initializer_list<T> list) -> vector & {
+        return *this = vector(list);
+    }
+
+    // :: Copy assignment
+    template <typename U, size_t N>
+        requires std::is_convertible_v<U, value_type> && (N >= Dims)
+    constexpr auto operator=(const vector<U, N> &other) -> vector & {
+        auto transformed_range = other
+                                 | std::views::transform([](U v) { return static_cast<T>(v); });
+        std::ranges::copy(transformed_range, begin());
+        return *this;
+    }
+    constexpr auto operator=(const vector &other) -> vector & {
+        if (&other == this)
+            return *this;
+        std::ranges::copy(other, begin());
         return *this;
     }
 
-    constexpr auto operator[](const size_t i) noexcept -> reference { return data[i]; }
-    constexpr auto operator[](const size_t i) const noexcept -> const_reference { return data[i]; }
-
-    constexpr auto begin() noexcept -> iterator { return data.begin(); }
-    constexpr auto begin() const noexcept -> const_iterator { return data.begin(); }
-    constexpr auto cbegin() const noexcept -> const_iterator { return data.cbegin(); }
-    constexpr auto end() noexcept -> iterator { return data.end(); }
-    constexpr auto end() const noexcept -> const_iterator { return data.end(); }
-    constexpr auto cend() const noexcept -> const_iterator { return data.cend(); }
-
-    constexpr auto magnitude() const -> value_type { return static_cast<T>(sqrt(magnitude_squared())); }
-
-    constexpr auto magnitude_squared() const -> value_type { return dot_product(*this, *this); }
-
-    constexpr auto normalized() const -> vector<T, Ds> {
-        vector<T, Ds> res = *this;
-        auto mag = magnitude();
-        MIA_VECTOR_LOOP_OPERATION(res[i] *= (T(1) / mag));
-        return res;
+    // :: Move assignment
+    constexpr auto operator=(vector &&other) noexcept -> vector & {
+        std::ranges::move(other, begin());
+        return *this;
     }
 
-    constexpr auto normalize() -> value_type {
-        auto mag = magnitude();
-        MIA_VECTOR_LOOP_OPERATION(data[i] *= (T(1) / mag));
-        return mag;
+    // NOTE: ELEMENT ACCESS
+
+    constexpr auto operator[](const size_t i) -> reference {
+        return data[i];
+    }
+    constexpr auto operator[](const size_t i) const -> const_reference {
+        return data[i];
+    }
+    constexpr auto at(const size_t i) -> std::optional<std::reference_wrapper<value_type>> {
+        if (i >= size()) {
+            return {};
+        }
+        return data[i];
+    }
+    constexpr auto at(const size_t i) const -> std::optional<std::reference_wrapper<const value_type>> {
+        if (i >= size()) {
+            return {};
+        }
+        return data[i];
     }
 
-    static constexpr auto dot_product(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> value_type {
-        T result = 0;
-        MIA_VECTOR_LOOP_OPERATION(result += lhs[i] * rhs[i]);
+    // :: Named accessors
+    constexpr auto x() -> value_type &
+        requires(Dims >= 1)
+    {
+        return data[0];
+    }
+    constexpr auto x() const -> const value_type &
+        requires(Dims >= 1)
+    {
+        return data[0];
+    }
+    constexpr auto y() -> value_type &
+        requires(Dims >= 2)
+    {
+        return data[1];
+    }
+    constexpr auto y() const -> const value_type &
+        requires(Dims >= 2)
+    {
+        return data[1];
+    }
+    constexpr auto z() -> value_type &
+        requires(Dims >= 3)
+    {
+        return data[2];
+    }
+    constexpr auto z() const -> const value_type &
+        requires(Dims >= 3)
+    {
+        return data[2];
+    }
+    constexpr auto w() -> value_type &
+        requires(Dims >= 4)
+    {
+        return data[3];
+    }
+    constexpr auto w() const -> const value_type &
+        requires(Dims >= 4)
+    {
+        return data[3];
+    }
+
+    // NOTE: CONST FUNCTIONS
+
+    // Magnitude & Magnitude squared
+    [[nodiscard]] constexpr auto magnitude_squared() const -> compute_type {
+        return dot_product(*this, *this);
+    }
+    // TODO: Make constexpr after C++26
+    [[nodiscard]] /*constexpr*/ auto magnitude() const -> compute_type {
+        return static_cast<compute_type>(std::sqrt(magnitude_squared()));
+    }
+
+    // TODO: Make constexpr after C++26
+    inline auto normalized() const -> vector {
+        vector result = *this;
+        compute_type _magnitude = magnitude();
+        for (auto &v : result) {
+            v *= static_cast<value_type>(1 / _magnitude);
+        }
         return result;
     }
 
-    // static constexpr vector<T, Ds> cross_product(const vector<T, Ds>& lhs, const vector<T, Ds>&
-    // rhs) {}
-    static constexpr auto hadamard_product(const vector<T, Ds>& lhs,
-                                           const vector<T, Ds>& rhs) -> vector<T, Ds> {
-        vector<T, Ds> res;
-        MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] * rhs[i]);
-        return res;
-    }
+    // NOTE: MODIFIERS
 
-    static constexpr auto lerp(const vector<T, Ds>& start, const vector<T, Ds>& end,
-                               T k) -> vector<T, Ds> {
-        vector<T, Ds> res;
-        const T one_minus_k = static_cast<T>(1.0) - k;
-        MIA_VECTOR_LOOP_OPERATION(res[i] = one_minus_k * start[i] + k * end[i]);
-        return res;
-    }
-
-    static constexpr auto max(const vector<T, Ds>& lhs,
-                              const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
-        vector<T, Ds> res;
-        MIA_VECTOR_LOOP_OPERATION(res[i] = std::max(lhs[i], rhs[i]));
-        return res;
-    }
-    static constexpr auto min(const vector<T, Ds>& lhs,
-                              const vector<T, Ds>& rhs) -> const vector<T, Ds>& {
-        vector<T, Ds> res;
-        MIA_VECTOR_LOOP_OPERATION(res[i] = std::min(lhs[i], rhs[i]));
-        return res;
-    }
-
-    static constexpr auto distance(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> value_type {
-        return (rhs - lhs).length();
-    }
-    static constexpr auto distance_squared(const vector<T, Ds>& lhs,
-                                           const vector<T, Ds>& rhs) -> value_type {
-        return (rhs - lhs).length_squared();
-    }
-
-    static constexpr auto angle(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> value_type {
-        const T divisor = lhs.Length() * rhs.Length();
-        if (divisor == T(0)) {
-            return T(0);
+    // Normalize this vector
+    // @return Return magnitude of the vector before normalizing
+    // TODO: Make constexpr after C++26
+    inline auto normalizing() -> value_type {
+        compute_type _magnitude = magnitude();
+        for (auto &v : data) {
+            v *= static_cast<value_type>(1 / _magnitude);
         }
-        const T cos_v = vector<T, Ds>::dot_product(lhs, rhs) / divisor;
-        if (cos_v <= T(1)) {
+        return _magnitude;
+    }
+
+    // NOTE: STATIC PROPERTIES
+    static constexpr auto zero() noexcept -> vector
+        requires(Dims == 2 || Dims == 3)
+    {
+        if constexpr (Dims == 2) {
+            return vector{0, 0};
+        } else {
+            return vector{0, 0, 0};
+        }
+    }
+    static constexpr auto one() noexcept -> vector
+        requires(Dims == 2 || Dims == 3)
+    {
+        if constexpr (Dims == 2) {
+            return vector{1, 1};
+        } else {
+            return vector{1, 1, 1};
+        }
+    }
+    static constexpr auto up() noexcept -> vector
+        requires(Dims == 2 || Dims == 3)
+    {
+        if constexpr (Dims == 2) {
+            return vector{0, 1};
+        } else {
+            return vector{0, 1, 0};
+        }
+    }
+    static constexpr auto down() noexcept -> vector
+        requires(Dims == 2 || Dims == 3)
+    {
+        if constexpr (Dims == 2) {
+            return vector{0, -1};
+        } else {
+            return vector{0, -1, 0};
+        }
+    }
+    static constexpr auto left() noexcept -> vector
+        requires(Dims == 2 || Dims == 3)
+    {
+        if constexpr (Dims == 2) {
+            return vector{-1, 0};
+        } else {
+            return vector{-1, 0, 0};
+        }
+    }
+    static constexpr auto right() noexcept -> vector
+        requires(Dims == 2 || Dims == 3)
+    {
+        if constexpr (Dims == 2) {
+            return vector{1, 0};
+        } else {
+            return vector{1, 0, 0};
+        }
+    }
+    static constexpr auto forward() noexcept -> vector
+        requires(Dims == 3)
+    {
+        return vector{0, 0, 1};
+    }
+    static constexpr auto back() noexcept -> vector
+        requires(Dims == 3)
+    {
+        return vector{0, 0, 1};
+    }
+
+    // NOTE: STATIC FUNCTIONS
+
+    // :: Vector operation
+    // Hadamard product
+    static constexpr auto hadamard_product(const vector &lhs,
+                                           const vector &rhs) -> vector {
+        vector result{};
+        auto range = std::views::zip(result, lhs, rhs);
+        for (auto [res_element, l_element, r_element] : range) {
+            res_element = l_element * r_element;
+        }
+        return result;
+    }
+
+    // Dot product
+    static constexpr auto dot_product(const vector &lhs,
+                                      const vector &rhs) -> compute_type {
+        compute_type result{};
+        auto range = std::views::zip(lhs, rhs);
+        for (auto [l_element, r_element] : range) {
+            result += static_cast<compute_type>(l_element * r_element);
+        }
+        return result;
+    }
+
+    // Min & Max
+    static constexpr auto max(const vector &lhs,
+                              const vector &rhs) -> vector {
+        vector result;
+        auto range = std::views::zip(result, lhs, rhs);
+        for (auto [res_element, l_element, r_element] : range) {
+            res_element = std::max(l_element, r_element);
+        }
+        return result;
+    }
+    static constexpr auto min(const vector &lhs,
+                              const vector &rhs) -> vector {
+        vector result;
+        auto range = std::views::zip(result, lhs, rhs);
+        for (auto [res_element, l_element, r_element] : range) {
+            res_element = std::min(l_element, r_element);
+        }
+        return result;
+    }
+
+    // Lerp
+    static constexpr auto lerp(const vector &from,
+                               const vector &to,
+                               const compute_type alpha) -> vector {
+        vector result;
+        const auto one_minus_alpha = static_cast<compute_type>(1.0) - alpha;
+        auto range = std::views::zip(result, from, to);
+        for (auto [res_element, from_element, to_element] : range) {
+            res_element = static_cast<value_type>(one_minus_alpha * static_cast<compute_type>(from_element)
+                                                  + alpha * static_cast<compute_type>(to_element));
+        }
+        return result;
+    }
+
+    // FIXME: error when use this in T = int (or other integer types)
+    // Distance & Distance squared
+    static constexpr auto distance_squared(const vector &lhs,
+                                           const vector &rhs) -> compute_type {
+        return (rhs - lhs).magnitude_squared();
+    }
+    // TODO: Make constexpr after C++26
+    static inline auto distance(const vector &lhs,
+                                const vector &rhs) -> compute_type {
+        return (rhs - lhs).magnitude();
+    }
+
+    // Angle
+    static constexpr auto angle(const vector &from,
+                                const vector &to) -> compute_type {
+        const compute_type divisor = from.magnitude() * to.magnitude();
+        if (divisor == 0)
+            return 0;
+
+        const compute_type cos_v = dot_product(from, to) / divisor;
+        if (cos_v <= 1) {
             return std::acos(cos_v);
         }
-        return T(0);
+
+        return 0;
     }
 
-    std::array<T, Ds> data;
+    // Cross product
+    // This only work on Dims == 3
+    static constexpr auto cross_product(const vector &lhs, const vector &rhs) -> vector
+        requires(Dims == 3)
+    {
+        return vector{lhs[1] * rhs[2] - lhs[2] * rhs[1],
+                      lhs[2] * rhs[0] - lhs[0] * rhs[2],
+                      lhs[0] * rhs[1] - lhs[1] * rhs[0]};
+    }
+
+    // NOTE: OPERATORS
+
+    // :: Compare operators
+    constexpr auto operator==(const vector &other) const -> bool {
+        auto zip_range = std::views::zip(*this, other);
+        for (auto [this_element, other_element] : zip_range) {
+            if (this_element != other_element)
+                return false;
+        }
+        return true;
+    }
+    constexpr auto operator!=(const vector &other) const -> bool {
+        return !(operator==(other));
+    }
+
+    // :: Operators
+    // +, - with vector
+    template <typename U>
+        requires std::is_convertible_v<U, value_type>
+    constexpr auto operator+(const vector<U, Dims> &other) const -> vector {
+        vector result;
+        auto zip_range = std::views::zip(result, *this, other);
+        for (auto [result_element, this_element, other_element] : zip_range) {
+            result_element = this_element + static_cast<value_type>(other_element);
+        }
+        return result;
+    }
+    template <typename U>
+        requires std::is_convertible_v<U, value_type>
+    constexpr auto operator-(const vector<U, Dims> &other) const -> vector {
+        vector result;
+        auto zip_range = std::views::zip(result, *this, other);
+        for (auto [result_element, this_element, other_element] : zip_range) {
+            result_element = this_element - static_cast<value_type>(other_element);
+        }
+        return result;
+    }
+
+    template <typename U>
+        requires std::is_convertible_v<U, value_type>
+    constexpr auto operator+=(const vector<U, Dims> &other) -> vector {
+        return *this = (*this + other);
+    }
+    template <typename U>
+        requires std::is_convertible_v<U, value_type>
+    constexpr auto operator-=(const vector<U, Dims> &other) -> vector {
+        return *this = (*this - other);
+    }
+
+    // *, / with number
+    constexpr auto operator*(const compute_type other) const -> vector {
+        vector result;
+        auto zip_range = std::views::zip(result, *this);
+        for (auto [result_element, this_element] : zip_range) {
+            result_element = static_cast<value_type>(static_cast<compute_type>(this_element) * other);
+        }
+        return result;
+    }
+    constexpr auto operator/(const compute_type other) const -> vector {
+        vector result;
+        auto zip_range = std::views::zip(result, *this);
+        for (auto [result_element, this_element] : zip_range) {
+            result_element = static_cast<value_type>(static_cast<compute_type>(this_element) / other);
+        }
+        return result;
+    }
+
+    template <typename U>
+        requires std::is_convertible_v<U, value_type>
+    constexpr auto operator*=(const compute_type other) -> vector {
+        return *this = (*this * other);
+    }
+    template <typename U>
+        requires std::is_convertible_v<U, value_type>
+    constexpr auto operator/=(const compute_type other) -> vector {
+        return *this = (*this / other);
+    }
 };
 
-template <typename T, size_t Ds>
-constexpr auto operator==(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> bool {
-    MIA_VECTOR_LOOP_OPERATION(if (lhs[i] != rhs[i]) return false)
-    return true;
-}
-template <typename T, size_t Ds>
-constexpr auto operator!=(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> bool {
-    return !(lhs == rhs);
+// Define the rest of operator
+template <typename T, size_t Dims>
+constexpr auto operator*(const typename vector<T, Dims>::compute_type num, const vector<T, Dims> &vec) -> vector<T, Dims> {
+    return vec * num;
 }
 
-template <typename T, size_t Ds>
-constexpr auto operator-(const vector<T, Ds>& v) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = -v.data[i])
-    return res;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator*(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] * rhs[i])
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator*(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] * s);
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator*(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] * s);
-    return res;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator/(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] / rhs[i])
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator/(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] / s)
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator/(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = s / v[i])
-    return res;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator+(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] + rhs[i])
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator+(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] + s)
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator+(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] + s)
-    return res;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator-(const vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = lhs[i] - rhs[i])
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator-(const vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = v[i] - s)
-    return res;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator-(U s, const vector<T, Ds>& v) -> vector<T, Ds> {
-    vector<T, Ds> res;
-    MIA_VECTOR_LOOP_OPERATION(res[i] = s - v[i])
-    return res;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator*=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(lhs[i] *= rhs[i])
-    return lhs;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator*=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(v[i] *= s);
-    return v;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator/=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(lhs[i] /= rhs[i])
-    return lhs;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator/=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(v[i] /= s)
-    return v;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator+=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(lhs[i] += rhs[i])
-    return lhs;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator+=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(v[i] += s)
-    return v;
-}
-
-template <typename T, size_t Ds>
-constexpr auto operator-=(vector<T, Ds>& lhs, const vector<T, Ds>& rhs) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(lhs[i] -= rhs[i])
-    return lhs;
-}
-template <typename T, size_t Ds, typename U = T>
-constexpr auto operator-=(vector<T, Ds>& v, U s) -> vector<T, Ds> {
-    MIA_VECTOR_LOOP_OPERATION(v[i] -= s)
-    return v;
-}
-
-}  // namespace mia
+} // namespace mia
