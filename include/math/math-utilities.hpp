@@ -43,18 +43,14 @@ class simd_allocator : public std::allocator<T> {
     constexpr void deallocate(pointer p, size_type n) {
         std::free(p, n);
     }
-};
 
-template <typename T1, typename T2>
-constexpr auto operator==([[maybe_unused]] const simd_allocator<T1> lhs,
-                          [[maybe_unused]] const simd_allocator<T2> rhs) noexcept -> bool {
-    return true;
-}
-template <typename T1, typename T2>
-constexpr auto operator!=([[maybe_unused]] const simd_allocator<T1> lhs,
-                          [[maybe_unused]] const simd_allocator<T2> rhs) noexcept -> bool {
-    return false;
-}
+    constexpr auto operator==([[maybe_unused]] const simd_allocator other) noexcept -> bool {
+        return true;
+    }
+    constexpr auto operator!=([[maybe_unused]] const simd_allocator other) noexcept -> bool {
+        return false;
+    }
+};
 
 // Math
 namespace math {
